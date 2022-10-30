@@ -1,6 +1,7 @@
 name: check release
 
 on:
+  push:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
@@ -43,7 +44,8 @@ jobs:
             })
             core.setOutput('shouldUpdate', shouldUpdate)
             core.setOutput('version', version)
-            core.setOutput('downloadUrl', latestVersion.zipball_url)
+            core.setOutput('downloadUrl', latest.zipball_url)
+            core.debug(`shouldUpdate: ${shouldUpdate}, version: ${version}, downloadUrl: ${latestVersion.zipball_url}`)
       - name: download swagger-ui
         if: steps.check.outputs.shouldUpdate
         run: |
