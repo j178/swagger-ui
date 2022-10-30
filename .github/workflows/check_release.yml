@@ -54,8 +54,8 @@ jobs:
         run: |
           curl -sSL ${{ steps.check.outputs.downloadUrl }} -o swagger-ui.zip
           unzip -q swagger-ui.zip
-          mv swagger-api-*/dist .
-          rm -rf swagger-api-*.
+          mv ./swagger-api-swagger-ui-*/dist .
+          rm -rf ./swagger-api-swagger-ui-*
           rm swagger-ui.zip
           ls -l
       - uses: actions/setup-go@v3
@@ -70,11 +70,9 @@ jobs:
       - name: push
         if: steps.check.outputs.shouldUpdate
         run: |
-          cat ~/.ssh/id_rsa.pub
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
           git tag -a ${{ steps.check.outputs.version }} -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
           git push origin ${{ steps.check.outputs.version }}
-          git push
