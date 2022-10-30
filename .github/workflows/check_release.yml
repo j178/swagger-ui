@@ -23,38 +23,30 @@ jobs:
           script: |
             const shouldUpdate = false
             const version = ""
-            const { data: releases } = await github.repos.listReleases({
+            const { data: latest } = await github.rest.repos.getLatestRelease({
               owner: 'swagger-api',
               repo: 'swagger-ui',
             })
-            const latest = releases[0]
             const latestVersion = latest.tag_name
-            const latestVersionNumber = latestVersion.replace('v', '')
-            const { data: currentReleases } = await github.repos.listReleases({
+            const { data: currentLatest } = await github.rest.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
             })
-            if (currentReleases.length === 0) {
+            const currentLatestVersion = currentLatest.tag_name
+            if (currentLatestVersion != latestVersion) {
               shouldUpdate = true
               version = latestVersion
-            } else {
-              const currentLatest = currentReleases[0]
-              const currentLatestVersion = currentLatest.tag_name
-              const currentLatestVersionNumber = currentLatestVersion.replace('v', '')
-              if (currentLatestVersionNumber < latestVersionNumber) {
-                shouldUpdate = true
-                version = latestVersion
-              }
             }
             core.setOutput('shouldUpdate', shouldUpdate)
             core.setOutput('version', version)
+            core.setOutput('downloadUrl', latestVersion.zipball_url)
       - name: download swagger-ui
         if: steps.check.outputs.shouldUpdate
         run: |
-          curl -L https://github.com/swagger-api/swagger-ui/archive/refs/tags/${{ steps.check.outputs.version }}.zip -o swagger-ui.zip
+          curl -L ${{ steps.check.outputs.downloadUrl }} -o swagger-ui.zip
           unzip swagger-ui.zip
-          mv swagger-ui-*/dist .
-          rm -rf swagger-ui-*.
+          mv swagger-api-*/dist .
+          rm -rf swagger-api-*.
           rm swagger-ui.zip
       - uses: actions/checkout@v3
         if: steps.check.outputs.shouldUpdate
