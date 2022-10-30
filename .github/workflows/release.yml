@@ -40,7 +40,8 @@ jobs:
               ref: `tags/${latestVersion}`,
             }).then(({ data }) => {
               core.info(`Tag ${latestVersion} is existed, no need to update`)
-            }).catch(() => {
+            }).catch((e) => {
+              console.log(e)
               core.info(`Tag ${latestVersion} not found, need to update`)
               shouldUpdate = true
             })
