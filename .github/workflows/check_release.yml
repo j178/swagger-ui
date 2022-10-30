@@ -23,7 +23,6 @@ jobs:
         with:
           script: |
             let shouldUpdate = false
-            let version = ""
             const { data: latest } = await github.rest.repos.getLatestRelease({
               owner: 'swagger-api',
               repo: 'swagger-ui',
@@ -36,16 +35,14 @@ jobs:
               const currentVersion = data.tag_name
               if (currentVersion !== latestVersion) {
                 shouldUpdate = true
-                version = latestVersion
               }
             }).catch(() => {
               shouldUpdate = true
-              version = latestVersion
             })
             core.setOutput('shouldUpdate', shouldUpdate)
-            core.setOutput('version', version)
+            core.setOutput('version', latest.version)
             core.setOutput('downloadUrl', latest.zipball_url)
-            core.info(`shouldUpdate: ${shouldUpdate}, version: ${version}, downloadUrl: ${latestVersion.zipball_url}`)
+            core.info(`shouldUpdate: ${shouldUpdate}, version: ${latest.version}, downloadUrl: ${latest.zipball_url}`)
       - name: download swagger-ui
         if: steps.check.outputs.shouldUpdate
         run: |
