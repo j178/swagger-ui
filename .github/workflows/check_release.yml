@@ -28,15 +28,19 @@ jobs:
               repo: 'swagger-ui',
             })
             const latestVersion = latest.tag_name
-            const { data: currentLatest } = await github.rest.repos.getLatestRelease({
+            github.rest.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-            })
-            const currentLatestVersion = currentLatest.tag_name
-            if (currentLatestVersion != latestVersion) {
+            }).then(({ data }) => {
+              const currentVersion = data.tag_name
+              if (currentVersion !== latestVersion) {
+                shouldUpdate = true
+                version = latestVersion
+              }
+            }).catch(() => {
               shouldUpdate = true
               version = latestVersion
-            }
+            })
             core.setOutput('shouldUpdate', shouldUpdate)
             core.setOutput('version', version)
             core.setOutput('downloadUrl', latestVersion.zipball_url)
