@@ -31,7 +31,7 @@ jobs:
               owner: 'swagger-api',
               repo: 'swagger-ui',
             })
-            const latestVersion = latest.tag_name
+            const latestVersion = 'v4.15.3' // latest.tag_name
             const latestUrl = latest.zipball_url
             // Check if the latest version tag is existed
             await github.rest.git.getRef({
@@ -44,6 +44,7 @@ jobs:
               console.log(e)
               core.info(`Tag ${latestVersion} not found, need to update`)
               shouldUpdate = true
+              exit()
             })
             core.setOutput('shouldUpdate', shouldUpdate)
             core.setOutput('version', latestVersion)
