@@ -1,0 +1,18 @@
+name: check release
+
+on:
+  schedule:
+    - ""
+
+# 1. 获取 swagger-ui 最新 release 版本号
+# 2. 获取当前仓库的最新 release 版本号
+# 3. 如果当前版本号小，下载最新的 swagger-ui release
+# 4. 执行 statik 生成文件
+# 5. add, commit, tag, push
+# 6. 调用 go-releaser 发起 release
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check swagger-ui latest release
