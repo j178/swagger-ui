@@ -49,7 +49,7 @@ jobs:
             core.setOutput('downloadUrl', latest.zipball_url)
             core.info(`shouldUpdate: ${shouldUpdate}, version: ${latest.tag_name}, downloadUrl: ${latest.zipball_url}`)
       - name: Download swagger-ui
-        if: steps.check.outputs.shouldUpdate == true
+        if: steps.check.outputs.shouldUpdate == "true"
         run: |
           curl -sSL ${{ steps.check.outputs.downloadUrl }} -o swagger-ui.zip
           unzip -q swagger-ui.zip
@@ -58,16 +58,16 @@ jobs:
           rm swagger-ui.zip
           ls -l
       - uses: actions/setup-go@v3
-        if: steps.check.outputs.shouldUpdate == true
+        if: steps.check.outputs.shouldUpdate == "true"
         with:
           go-version: '>=1.19.2'
           cache: true
-      - if: steps.check.outputs.shouldUpdate == true
+      - if: steps.check.outputs.shouldUpdate == "true"
         run: |
           go mod tidy
           go generate ./...
       - name: Commit & Push
-        if: steps.check.outputs.shouldUpdate == true
+        if: steps.check.outputs.shouldUpdate == "true"
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
