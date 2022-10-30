@@ -75,3 +75,4 @@ jobs:
           git commit -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
           git tag -a ${{ steps.check.outputs.version }} -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
           git push origin ${{ steps.check.outputs.version }}
+          git push
