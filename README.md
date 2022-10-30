@@ -12,7 +12,7 @@ package main
 
 import (
 	"net/http"
-    "github.com/j178/swagger-ui"
+	"github.com/j178/swagger-ui"
 )
 
 func main() {
