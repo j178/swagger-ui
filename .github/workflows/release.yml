@@ -1,29 +1,77 @@
-name: goreleaser
+name: check release
 
 on:
   push:
-    tags:
-      - '*'
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
-permissions:
-  contents: write
+# 1. 获取 swagger-ui 最新 release 版本号
+# 2. 获取当前仓库的最新 release 版本号
+# 3. 如果当前版本号小，下载最新的 swagger-ui release
+# 4. 执行 statik 生成文件
+# 5. add, commit, tag, push
 
 jobs:
-  goreleaser:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: git fetch --force --tags
+      - run:
+          git fetch --force --tags
+      - name: Check version
+        id: check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let shouldUpdate = false
+            const { data: latest } = await github.rest.repos.getLatestRelease({
+              owner: 'swagger-api',
+              repo: 'swagger-ui',
+            })
+            const latestVersion = latest.tag_name
+            await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            }).then(({ data }) => {
+              const currentVersion = data.tag_name
+              if (currentVersion !== latestVersion) {
+                shouldUpdate = true
+              }
+            }).catch(() => {
+              shouldUpdate = true
+            })
+            core.setOutput('shouldUpdate', shouldUpdate)
+            core.setOutput('version', latest.tag_name)
+            core.setOutput('downloadUrl', latest.zipball_url)
+            core.info(`shouldUpdate: ${shouldUpdate}, version: ${latest.tag_name}, downloadUrl: ${latest.zipball_url}`)
+      - name: Download swagger-ui
+        if: steps.check.outputs.shouldUpdate == 'true'
+        run: |
+          curl -sSL ${{ steps.check.outputs.downloadUrl }} -o swagger-ui.zip
+          unzip -q swagger-ui.zip
+          mv ./swagger-api-swagger-ui-*/dist .
+          rm -rf ./swagger-api-swagger-ui-*
+          rm swagger-ui.zip
+          ls -l
       - uses: actions/setup-go@v3
+        if: steps.check.outputs.shouldUpdate == 'true'
         with:
           go-version: '>=1.19.2'
           cache: true
-      - uses: goreleaser/goreleaser-action@v2
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.check.outputs.shouldUpdate == 'true'
+        run: |
+          go mod tidy
+          go generate ./...
+      - name: Commit & Push
+        if: steps.check.outputs.shouldUpdate == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
+          git tag -a ${{ steps.check.outputs.version }} -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
+          git push origin ${{ steps.check.outputs.version }}
+          git push
