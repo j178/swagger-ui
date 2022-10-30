@@ -32,21 +32,22 @@ jobs:
               repo: 'swagger-ui',
             })
             const latestVersion = latest.tag_name
-            await github.rest.repos.getLatestRelease({
+            const latestUrl = latest.zipball_url
+            // Check if the latest version tag is existed
+            await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
+              ref: `tags/${latestVersion}`,
             }).then(({ data }) => {
-              const currentVersion = data.tag_name
-              if (currentVersion !== latestVersion) {
-                shouldUpdate = true
-              }
+              core.info(`Tag ${latestVersion} is existed, no need to update`)
             }).catch(() => {
+              core.info(`Tag ${latestVersion} not found, need to update`)
               shouldUpdate = true
             })
             core.setOutput('shouldUpdate', shouldUpdate)
-            core.setOutput('version', latest.tag_name)
-            core.setOutput('downloadUrl', latest.zipball_url)
-            core.info(`shouldUpdate: ${shouldUpdate}, version: ${latest.tag_name}, downloadUrl: ${latest.zipball_url}`)
+            core.setOutput('version', latestVersion)
+            core.setOutput('downloadUrl', latestUrl)
+            core.info(`shouldUpdate: ${shouldUpdate}, version: ${latestVersion}, downloadUrl: ${latestUrl}`)
       - name: Download swagger-ui
         if: steps.check.outputs.shouldUpdate == 'true'
         run: |
@@ -73,5 +74,5 @@ jobs:
           git add .
           git commit -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
           git tag -a ${{ steps.check.outputs.version }} -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
-          git push origin ${{ steps.check.outputs.version }}
+          git push -f origin ${{ steps.check.outputs.version }}
           git push
