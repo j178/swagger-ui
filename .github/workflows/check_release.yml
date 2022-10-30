@@ -45,12 +45,12 @@ jobs:
             core.setOutput('shouldUpdate', shouldUpdate)
             core.setOutput('version', version)
             core.setOutput('downloadUrl', latest.zipball_url)
-            core.debug(`shouldUpdate: ${shouldUpdate}, version: ${version}, downloadUrl: ${latestVersion.zipball_url}`)
+            core.info(`shouldUpdate: ${shouldUpdate}, version: ${version}, downloadUrl: ${latestVersion.zipball_url}`)
       - name: download swagger-ui
         if: steps.check.outputs.shouldUpdate
         run: |
           curl -L ${{ steps.check.outputs.downloadUrl }} -o swagger-ui.zip
-          unzip swagger-ui.zip
+          unzip -ql swagger-ui.zip
           mv swagger-api-*/dist .
           rm -rf swagger-api-*.
           rm swagger-ui.zip
