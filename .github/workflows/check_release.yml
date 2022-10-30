@@ -17,6 +17,12 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - if: steps.check.outputs.shouldUpdate
+        run:
+          git fetch --force --tags
       - name: check version
         id: check
         uses: actions/github-script@v6
@@ -51,13 +57,7 @@ jobs:
           mv swagger-api-*/dist .
           rm -rf swagger-api-*.
           rm swagger-ui.zip
-      - uses: actions/checkout@v3
-        if: steps.check.outputs.shouldUpdate
-        with:
-          fetch-depth: 0
-      - if: steps.check.outputs.shouldUpdate
-        run:
-          git fetch --force --tags
+          ls -l
       - uses: actions/setup-go@v3
         if: steps.check.outputs.shouldUpdate
         with:
