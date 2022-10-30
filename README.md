@@ -10,11 +10,13 @@ go get github.com/j178/swagger-ui
 ```go
 package main
 
-import "net/http"
-import "github.com/j178/swagger-ui"
+import (
+	"net/http"
+    "github.com/j178/swagger-ui"
+)
 
 func main() {
-	http.Handle("/swagger/", http.StripPrefix("/swagger/", swagger_ui.FS))
+	http.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(swagger_ui.FS)))
 	http.ListenAndServe(":8000", nil)
 }
 ```
