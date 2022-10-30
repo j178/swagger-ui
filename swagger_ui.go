@@ -1,14 +1,6 @@
 package swagger_ui
 
-import (
-	"net/http"
+import "github.com/j178/swagger-ui/internal/statik"
 
-	_ "github.com/j178/swagger-ui/statik"
-	"github.com/rakyll/statik/fs"
-)
-
-var FS http.FileSystem
-
-func init() {
-	FS, _ = fs.New()
-}
+//go:generate github.com/FZambia/statik/fs@master -src=./swagger-ui -dest=./internal -f
+var FS = statik.FS

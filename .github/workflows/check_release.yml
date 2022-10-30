@@ -1,8 +1,9 @@
 name: check release
 
 on:
+  workflow_dispatch:
   schedule:
-    - ""
+    - cron: "0 0 * * *"
 
 # 1. 获取 swagger-ui 最新 release 版本号
 # 2. 获取当前仓库的最新 release 版本号
@@ -15,4 +16,70 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: check swagger-ui latest release
+      - name: check version
+        id: check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const shouldUpdate = false
+            const version = ""
+            const { data: releases } = await github.repos.listReleases({
+              owner: 'swagger-api',
+              repo: 'swagger-ui',
+            })
+            const latest = releases[0]
+            const latestVersion = latest.tag_name
+            const latestVersionNumber = latestVersion.replace('v', '')
+            const { data: currentReleases } = await github.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            if (currentReleases.length === 0) {
+              shouldUpdate = true
+              version = latestVersion
+            } else {
+              const currentLatest = currentReleases[0]
+              const currentLatestVersion = currentLatest.tag_name
+              const currentLatestVersionNumber = currentLatestVersion.replace('v', '')
+              if (currentLatestVersionNumber < latestVersionNumber) {
+                shouldUpdate = true
+                version = latestVersion
+              }
+            }
+            core.setOutput('shouldUpdate', shouldUpdate)
+            core.setOutput('version', version)
+      - name: download swagger-ui
+        if: steps.check.outputs.shouldUpdate
+        run: |
+          curl -L https://github.com/swagger-api/swagger-ui/archive/refs/tags/${{ steps.check.outputs.version }}.zip -o swagger-ui.zip
+          unzip swagger-ui.zip
+          mv swagger-ui-*/dist .
+          rm -rf swagger-ui-*.
+          rm swagger-ui.zip
+      - uses: actions/checkout@v3
+        if: steps.check.outputs.shouldUpdate
+        with:
+          fetch-depth: 0
+      - if: steps.check.outputs.shouldUpdate
+        run:
+          git fetch --force --tags
+      - uses: actions/setup-go@v3
+        if: steps.check.outputs.shouldUpdate
+        with:
+          go-version: '>=1.19.2'
+          cache: true
+      - if: steps.check.outputs.shouldUpdate
+        run: |
+          go mod tidy
+          go generate ./...
+      - name: push
+        if: steps.check.outputs.shouldUpdate
+        run: |
+          cat ~/.ssh/id_rsa.pub
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
+          git tag -a ${{ steps.check.outputs.version }} -m "chore: update swagger-ui to ${{ steps.check.outputs.version }}"
+          git push origin ${{ steps.check.outputs.version }}
+          git push
