@@ -1,4 +1,6 @@
-# Go package that embeds swagger-ui source
+# Swagger UI embedded in Go binary
+
+This a golang package that embeds swagger-ui source, making it easy to serve swagger-ui from a golang application.
 
 ## Usage
 ```shell
